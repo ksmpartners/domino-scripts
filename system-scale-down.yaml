@@ -1,0 +1,40 @@
+trigger: none 
+pool:
+  vmImage: 'ubuntu-latest'
+schedules:
+- cron: "0 1 * * Tue,Wed,Thu,Fri,Sat"  
+  displayName: Nightly Scale-Down
+  branches:
+    include: [ main ]
+  always: true
+variables:
+  - name: APP_ID
+    value: <App ID value>
+  - name: TENANT_ID
+    value: <Tenant ID value>
+  - group: domino-secrets
+jobs:
+  - job: scale_down
+    steps:
+    - checkout: self
+      clean: true
+      persistCredentials: true    
+    - task: KubectlInstaller@0
+      displayName: "Install Kubectl"
+      inputs:
+        kubectlVersion: latest
+    - task: Kubernetes@1
+      inputs:
+        connectionType: Azure Resource Manager
+        azureSubscriptionEndpoint: <Your org's Azure subscription>
+        azureResourceGroup: <Your org's Domino Azure Resource Group>
+        kubernetesCluster: <Your org's Domino cluster name>
+        command: login
+    - task: KubeloginInstaller@0   
+    - task: Bash@3
+      displayName: "Scale-Down Domino"
+      inputs:
+        filePath: $(Agent.BuildDirectory)/s/scaleDownDomino.sh
+      env:
+        SP_PASSWORD: <Service Principal password for SP with permissions to modify the Azure resources>
+        

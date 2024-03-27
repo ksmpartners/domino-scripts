@@ -1,0 +1,39 @@
+trigger: none 
+pool:
+  vmImage: 'ubuntu-latest'
+schedules:
+- cron: "00 12 * * Mon,Tue,Wed,Thu,Fri"  
+  displayName: Daily Scale-Up
+  branches:
+    include: [ main ]
+  always: true
+variables:
+  - name: APP_ID
+    value: <Application (Client ID) value for Service Principal with permissions to modify Domino Azure Resources>
+  - name: TENANT_ID
+    value: <Your organization's Azure Tenant ID value>
+  - group: <Azure Pipeline Variable Library Group Containing SP_PASSWORD value>
+jobs:
+  - job: scale_up
+    steps:
+    - checkout: self
+      clean: true
+      persistCredentials: true    
+    - task: KubectlInstaller@0
+      displayName: "Install Kubectl"
+      inputs:
+        kubectlVersion: latest
+    - task: Kubernetes@1
+      inputs:
+        connectionType: Azure Resource Manager
+        azureSubscriptionEndpoint: <Your organization's Azure subscription>
+        azureResourceGroup: <Your organization's Domino Azure Resource Group>
+        kubernetesCluster: <Your organization's Domino cluster name>
+        command: login
+    - task: KubeloginInstaller@0
+    - task: Bash@3
+      displayName: "Scale-Up Domino"
+      inputs:
+        filePath: $(Agent.BuildDirectory)/s/scaleUpDomino.sh
+      env:
+        SP_PASSWORD: <Service Principal password for SP with permissions to modify the Domino Azure resources>
