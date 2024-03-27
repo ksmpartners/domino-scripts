@@ -1,6 +1,6 @@
 >Note: These scripts are specific to an Azure-based installation of Domino Data Lab. The scripts should be able to be adapted to any cloud provider, but are only guaranteed to work within Azure.
 # Purpose
-These scripts and yaml pipelines can be used to automate the scaling the Domino system compute resources. Doing so may save your organization's resources during idle times in the system. 
+These scripts and yaml pipelines can be used to automate the scaling of compute resources for a Domino Data Lab implementation. Doing so may save your organization's resources during idle times in the system. 
 
 # Prerequisites
 - A Domino Data Lab installation using Azure cloud resources
