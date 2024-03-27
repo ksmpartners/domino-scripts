@@ -6,7 +6,7 @@ These scripts and yaml pipelines can be used to automate the scaling of compute 
 - A Domino Data Lab installation using Azure cloud resources
 - Access to the Azure resources used for the installation of Domino Data Lab
 - A Service Principal (or equivalent) has been provisioned in your Azure tenancy with permissions to modify your Domino installation's node pools in AKS
-- Ensure the scaleDownDomino.sh and scaleUpDomino.sh scripts are both executable by running `chmod +x` <filename> from the project directory in a terminal 
+- Ensure the scaleDownDomino.sh and scaleUpDomino.sh scripts are both executable by running `chmod +x <filename>` from the project directory in a terminal 
 
 # Usage
 - Replace the values in all files surrounded by `<>` with your organization's information
