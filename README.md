@@ -4,9 +4,10 @@ These scripts and yaml pipelines can be used to automate the scaling of compute 
 
 # Prerequisites
 - A Domino Data Lab installation using Azure cloud resources
-- Access to the Azure resources used for the installation of Domino Data Lab
+- Access to the Azure resources used for the installation of Domino Data Lab 
 - A Service Principal (or equivalent) has been provisioned in your Azure tenancy with permissions to modify your Domino installation's node pools in AKS
-- Ensure the scaleDownDomino.sh and scaleUpDomino.sh scripts are both executable by running `chmod +x <filename>` from the project directory in a terminal 
+- An Azure Pipeline Library Variable Group with access to the Service Principal secret
+- The scaleDownDomino.sh and scaleUpDomino.sh scripts are both executable (if not, run `chmod +x <filename>` from the project directory in a terminal) 
 
 # Usage
 - Replace the values in all files surrounded by `<>` with your organization's information
@@ -16,6 +17,6 @@ These scripts and yaml pipelines can be used to automate the scaling of compute 
   - for example, the default schedule is set to run the scale-down at 1 AM, UTC (9 PM EST), Tuesday-Saturday.
 	`cron: "0 1 * * Tue,Wed,Thu,Fri,Sat"`
 - Determine the extent of how you would like to scale your Domino system 
-  - The example in this project assumes a small implementation with the compute nodes scaling up to only 4. Adjust these numbers based on your organizational needs. 
+  - The example in this project assumes a smaller implementation. Adjust the node pool numbers based on your organizational needs. 
 	
 > Note: Your system will still require the Azure default `system` node pool even after you have scaled down your domino `platform` and `compute` node pools. [From Azure's AKS documentation](https://learn.microsoft.com/en-us/azure/aks/use-system-pools?tabs=azure-cli): "Every AKS cluster must contain at least one system node pool with at least two nodes."
