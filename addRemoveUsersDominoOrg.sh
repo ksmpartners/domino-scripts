@@ -28,8 +28,31 @@
 DOMINO_URL=https://domino.ksmpartners.com
 SAMPLE_ORG_ID=67f952aff8b93f4d8ef44670
 
-read -p "Enter comma-separated list of IDs of users to add" usersToAdd
+read -p "Enter comma-separated list of IDs of users to add\n e.g., 1,2,3" usersToAdd
 read -p "Enter comma-separated list of IDs of users to remove" usersToRemove
+
+newUsersJson=""
+
+
+##Create user insert record json
+# Split the input into an array based on the comma
+IFS=', ' read -r -a userValues <<< "$usersToAdd"
+
+# Loop through each value and insert it into the template
+for userID in "${userValues[@]}"
+do
+    # Trim any leading or trailing whitespace
+    userID=$(echo $user | xargs)
+    
+	if [ -z "$newUserJson" ]; then
+		# Insert each value into the template and print
+		newUsersJson="$newUserJson{\"id\":$userID,\"role\":\"Member\"}"
+	else 	
+		newUsersJson="$newUserJson, {\"id\":$userID,\"role\":\"Member\"}"
+	fi
+done
+
+echo $newUserJson
 
 ##Get list of organization users
 
@@ -37,25 +60,25 @@ organizationCurrentUsers=$(curl --location --request GET "$DOMINO_URL/v4/organiz
 --header "X-Domino-Api-Key: $DOMINO_API_KEY")
 
 ##Append new user(s) to organizationCurrentUsers list
-organizationUsersListNewMembers=$organizationCurrentUsers
+#organizationUsersListNewMembers=$organizationCurrentUsers
 
 #sample JSON value of organizationCurrentUsers
-{"id":"67f952aff8b93f4d8ef44671","name":"DATA_ADMINISTRATORS","organizationUserId":"67f952aff8b93f4d8ef44670","members":[{"id":"65a17f9c375051686550cc4e","role":"Member"},{"id":"667c294cf431c9032dff8c36","role":"Admin"}]}
+#{"id":"67f952aff8b93f4d8ef44671","name":"DATA_ADMINISTRATORS","organizationUserId":"67f952aff8b93f4d8ef44670","members":[{"id":"65a17f9c375051686550cc4e","role":"Member"},{"id":"667c294cf431c9032dff8c36","role":"Admin"}]}
 
 ##TODO: parse the above string for just the values after "members". Then concatenate the new usersToAdd value(s). Those values will need to be formatted properly like the below request body. 
 
 ##Add user to organization
-curl --location --request PUT "$DOMINO_URL/v4/organizations/$SAMPLE_ORG_ID/members" \
---header 'X-Domino-Api-Key: ' \
---header 'Content-Type: application/json' \
---data '{
-  "members": [
-    {
-      "id": "674de32010cb4974f84cc159",
-      "role": "Admin"
-    }
-  ]
-}'
+#curl --location --request PUT "$DOMINO_URL/v4/organizations/$SAMPLE_ORG_ID/members" \
+#--header 'X-Domino-Api-Key: ' \
+#--header 'Content-Type: application/json' \
+#--data '{
+#  "members": [
+#    {
+#      "id": "674de32010cb4974f84cc159",
+#      "role": "Admin"
+#    }
+#  ]
+#}'
 
 
 
