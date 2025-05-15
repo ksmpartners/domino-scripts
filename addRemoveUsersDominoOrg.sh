@@ -26,7 +26,9 @@
 
 #Variables
 DOMINO_URL=https://domino.ksmpartners.com
-SAMPLE_ORG_ID=67f952aff8b93f4d8ef44670
+SAMPLE_ORG_ID=6813a563292f254e3d945b11
+logFile="user_changes.log"
+echo "=== User Changes Log: $(date) ===" > "$logFile"
 
 read -p "Enter comma-separated list of IDs of users to add\n e.g., 1,2,3" usersToAdd
 read -p "Enter comma-separated list of IDs of users to remove" usersToRemove
@@ -35,11 +37,14 @@ newUsersJson=""
 
 
 ##Create user insert record json
-# Split the input into an array based on the comma
-IFS=', ' read -r -a userValues <<< "$usersToAdd"
+# Split the usersToAdd input into an array based on the comma
+IFS=', ' read -r -a userAddValues <<< "$usersToAdd"
+
+# Split the usersToRemove input into an array based on the comma
+IFS=', ' read -r -a userRemoveValues <<< "$usersToRemove"
 
 # Loop through each value and insert it into the template
-for userID in "${userValues[@]}"
+for userID in "${userAddValues[@]}"
 do
     # Trim any leading or trailing whitespace
     userID=$(echo $user | xargs)
@@ -54,10 +59,97 @@ done
 
 echo $newUserJson
 
-##Get list of organization users
+# ##Get list of organization users
+# organizationCurrentUsers=$(curl --location --request GET "$DOMINO_URL/v4/organizations/$SAMPLE_ORG_ID" \
+# --header "X-Domino-Api-Key: $DOMINO_USER_API_KEY")
 
+##Get list of Domino users
+currentDomionUsers=$(curl --location --request GET "$DOMINO_URL/v4/users" \
+--header "X-Domino-Api-Key: $DOMINO_USER_API_KEY")
+
+# echo $currentDomionUsers
+
+##Format JSON for BASH?
+flatJson=$(echo "$currentDomionUsers" | tr -d '\n')
+
+
+##----------------------------------------ADD--------------------------------------------------
+
+##Loop - Retrieve Domino user ids matching emails being added to organization)
+for email in "${userAddValues[@]}"; do
+  id=$(echo "$flatJson" | grep -o "{[^}]*\"email\":\"$email\"[^}]*}" \
+       | grep -o '"id":"[^"]*"' \
+       | cut -d':' -f2 \
+       | tr -d '"')
+  if [ -n "$id" ]; then
+    userIdEmailAdd+=("$email|$id")
+  fi
+done
+
+# Add user ids to organization
+for pair in "${userIdEmailAdd[@]}"; 
+do
+  email="${pair%%|*}"
+  id="${pair##*|}"
+  echo "Added user ID $id (email: $email)" to group $SAMPLE_ORG_ID | tee -a "$logFile"
+  
+  # Create JSON payload
+  jsonPayloadAdd=$(printf '{
+  "userId": "%s", 
+  "organizationRole": "Member"
+  }' "$id")
+  #Add
+  curl --location --request PUT "$DOMINO_URL/api/organizations/v1/organizations/$SAMPLE_ORG_ID/user" \
+  --header "X-Domino-Api-Key: $DOMINO_USER_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw "$jsonPayloadAdd"
+done
+
+##---------------------------------------REMOVE------------------------------------------------
+
+##Loop - Retrieve Domino user ids matching emails being removed from organization)
+for email in "${userRemoveValues[@]}"; do
+  id=$(echo "$flatJson" | grep -o "{[^}]*\"email\":\"$email\"[^}]*}" \
+       | grep -o '"id":"[^"]*"' \
+       | cut -d':' -f2 \
+       | tr -d '"')
+  if [ -n "$id" ]; then
+    userIdEmailRemove+=("$email|$id")
+  fi
+done
+
+# Remove user ids from organization
+for pair in "${userIdEmailRemove[@]}"; 
+do
+  email="${pair%%|*}"
+  id="${pair##*|}"
+
+  echo "Removed user ID $id (email: $email)" from group $SAMPLE_ORG_ID | tee -a "$logFile"
+  
+  #Remove
+  curl --location --request DELETE "$DOMINO_URL/api/organizations/v1/organizations/$SAMPLE_ORG_ID/user?memberToRemoveId=$id&organizationId=$SAMPLE_ORG_ID" \
+  --header "X-Domino-Api-Key: $DOMINO_USER_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data ''
+done
+
+echo $jsonPayloadAdd
+
+## For Testing
+  # pvanbeever@ksmpartners.onmicrosoft.com
+  # lpham@ksmpartners.onmicrosoft.com
+  # mschwartz@ksmpartners.onmicrosoft.com
+# Expected Ids:
+  # 674de32010cb4974f84cc159 - P
+  # 674de31e6253f73bcd193211 - L
+  # 667c294cf431c9032dff8c36 - M 
+
+## Confirmation
+##Get list of organization users
 organizationCurrentUsers=$(curl --location --request GET "$DOMINO_URL/v4/organizations/$SAMPLE_ORG_ID" \
---header "X-Domino-Api-Key: $DOMINO_API_KEY")
+--header "X-Domino-Api-Key: $DOMINO_USER_API_KEY")
+echo $organizationCurrentUsers
+
 
 ##Append new user(s) to organizationCurrentUsers list
 #organizationUsersListNewMembers=$organizationCurrentUsers
